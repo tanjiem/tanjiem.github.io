@@ -7,7 +7,28 @@ npm install
 npm run dev        # local site at http://localhost:4321
 npm run build      # builds to dist/
 npm run check      # vocabulary, script, link and contrast checks on dist/
+npm test           # builds, then runs the browser tests in tests/
 ```
+
+## Tests
+
+`npm test` builds the site and runs Playwright against it in Chrome. The tests
+read the sitemap and the map itself, so a new seed or entry is covered without
+editing them. They check:
+
+- **the readout** (`tests/readout.spec.ts`): a first click chooses a light and a
+  second opens it, every light's readout names it and links to the same page,
+  keyboard focus chooses quietly and Enter opens, Escape and empty sky clear it,
+  a phone tap opens straight away;
+- **JavaScript off** (`tests/no-js.spec.ts`): every light is a working link, no
+  inner page ships a script, the phone menu still opens and shuts;
+- **consistency** (`tests/consistency.spec.ts`): the map, index, readouts,
+  legend, ledger, filters, entry pages and seed pages all agree;
+- **layout** (`tests/layout.spec.ts`): no sideways scroll at 390 to 1920px, the
+  résumé one click from every page, titles, descriptions and share images,
+  motion only when allowed.
+
+The same tests run on GitHub on every push (`.github/workflows/test.yml`).
 
 ## Adding a seed
 

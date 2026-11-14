@@ -12,7 +12,9 @@
     "astro": "astro",
     "check": "node scripts/check.mjs",
     "check:words": "node scripts/check.mjs words",
-    "check:deploy": "CHECK_DEPLOY=1 node scripts/check.mjs"
+    "check:deploy": "CHECK_DEPLOY=1 node scripts/check.mjs",
+    "test": "playwright test",
+    "pretest": "astro build"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.6",
@@ -20,6 +22,7 @@
     "astro": "^7.4.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@resvg/resvg-js": "^2.6.2"
   }
 }
