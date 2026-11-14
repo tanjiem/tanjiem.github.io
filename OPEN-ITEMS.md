@@ -40,8 +40,6 @@ The brief treats mock wording as placeholder. Confirm or rewrite every sentence 
 
 ## Domain and email, after you buy the domain
 
-Rename the repo to `seed-notebook` at the same time (Settings > General > Repository name). With a custom domain the repo name no longer affects the address, and GitHub forwards the old repo URL to the new one. After renaming, point your local copy at it: `git remote set-url origin https://github.com/tanjiem/seed-notebook.git`.
-
 For GitHub Pages: add `public/CNAME` containing your domain, change `SITE_URL`
 in `.github/workflows/deploy.yml` to `https://your-domain`, remove any
 `BASE_PATH` variable, and enter the DNS records from GitHub's "Managing a custom
