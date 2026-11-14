@@ -1,0 +1,59 @@
+---
+// Every light joined to this seed on the map, worked out from the content:
+// its entries, the seed it grows out of, and the seeds that grow out of it.
+import Mark from './Mark.astro';
+import { getWorld, pad, seedHref, entryHref, type Seed } from '../lib/world';
+
+interface Props {
+  seed: Seed;
+}
+const { seed } = Astro.props;
+const { entriesOf, parentOf, childrenOf } = await getWorld();
+const parent = parentOf(seed);
+
+const rows = [
+  ...(parent
+    ? [{ kind: 'seed' as const, state: parent.data.state, href: seedHref(parent), text: `grows out of seed ${pad(parent.data.number)}: ${parent.data.title}` }]
+    : []),
+  ...entriesOf(seed).map((e) => ({
+    kind: 'entry' as const,
+    state: e.data.state,
+    href: entryHref(e),
+    text: `notebook ${pad(e.data.number)}: ${e.data.state === 'written' ? e.data.title : 'unwritten'}`,
+  })),
+  ...childrenOf(seed).map((c) => ({
+    kind: 'seed' as const,
+    state: c.data.state,
+    href: seedHref(c),
+    text: `grows into seed ${pad(c.data.number)}, ${c.data.state}`,
+  })),
+];
+---
+<section class="connected" aria-labelledby="connected-h">
+  <h2 class="label" id="connected-h">Connected lights</h2>
+  {rows.length ? (
+    <ul>
+      {rows.map((r) => (
+        <li>
+          <Mark kind={r.kind} state={r.state} size={14} />
+          <a class={r.kind === 'seed' ? 'to-seed' : 'to-entry'} href={r.href}>{r.text.toLowerCase()}</a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="blank">no lights joined to this one yet</p>
+  )}
+</section>
+
+<style>
+  .connected { display: flex; flex-direction: column; gap: var(--s-1); }
+  ul { list-style: none; margin: var(--s-1) 0 0; padding: 0; border-bottom: var(--rule-dashed); }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 44px;
+    padding: var(--s-1) 0;
+    border-top: var(--rule-dashed);
+  }
+</style>

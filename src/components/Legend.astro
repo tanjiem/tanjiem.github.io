@@ -1,0 +1,45 @@
+---
+// The key under the map, in plain words. It lists only what the map shows,
+// worked out from the content, so a new state or line adds its own entry.
+import Mark from './Mark.astro';
+import { getWorld } from '../lib/world';
+
+const { seeds, entries, parentOf, entriesOf } = await getWorld();
+const seedStates = (['growing', 'not yet planted', 'bearing'] as const).filter((st) => seeds.some((s) => s.data.state === st));
+const entryStates = (['written', 'unwritten'] as const).filter((st) => entries.some((e) => e.data.state === st));
+const hasAbout = entries.length > 0;
+const hasGrows = seeds.some((s) => parentOf(s));
+const sizes = new Set(seeds.map((s) => entriesOf(s).length));
+---
+<ul class="legend" aria-label="How to read the map">
+  {seedStates.map((st) => (
+    <li><Mark kind="seed" state={st} size={16} />seed, {st}</li>
+  ))}
+  {entryStates.map((st) => (
+    <li><Mark kind="entry" state={st} size={16} />entry, {st}</li>
+  ))}
+  {hasAbout && (
+    <li><svg aria-hidden="true" width="28" height="8" viewBox="0 0 28 8"><path d="M0 4 H28" class="k-about" /></svg>entry is about seed</li>
+  )}
+  {hasGrows && (
+    <li><svg aria-hidden="true" width="28" height="8" viewBox="0 0 28 8"><path d="M0 4 H28" class="k-grows" /></svg>seed grows out of seed</li>
+  )}
+  {sizes.size > 1 && <li class="note">a bigger star has more entries</li>}
+</ul>
+
+<style>
+  .legend {
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--s-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-5);
+    font-family: var(--face-label);
+    font-size: var(--size-label-sm);
+    color: var(--text-quiet);
+  }
+  li { display: inline-flex; align-items: center; gap: var(--s-2); }
+  .k-about { stroke: var(--line-about); stroke-opacity: 0.7; stroke-width: 1.2; }
+  .k-grows { stroke: var(--line-grows); stroke-width: 1.5; stroke-dasharray: 5 5; }
+</style>

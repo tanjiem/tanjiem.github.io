@@ -1,0 +1,10 @@
+---
+// A set-apart list inside an entry, such as the rules that were frozen.
+interface Props {
+  title: string;
+}
+---
+<section class="kept" aria-label={Astro.props.title}>
+  <p class="label label--accent">{Astro.props.title}</p>
+  <slot />
+</section>

@@ -1,0 +1,87 @@
+/*
+  Seed Notebook tokens.
+  Every colour, face, size and line style lives here, once.
+  Change a value on its one line and the whole site follows.
+*/
+:root {
+  /* ground */
+  --ground: #140A26;
+  --ground-raised: #1D1036;
+  --rule: #3D2A5C;
+  --rule-strong: #5B4785;
+
+  /* ink */
+  --text: #F3E9D8;
+  --text-soft: #E4D9EC;
+  --text-quiet: #C9BBDD;
+
+  /* meaning: purple is the site, gold is a seed, teal is an entry */
+  --accent: #C4A1FF;
+  --seed: #FFC857;
+  --entry: #7CF5D3;
+
+  /* roles that borrow from the above; repoint them here, not in components */
+  --link: var(--accent);          /* links to pages that are neither seed nor entry */
+  --link-seed: var(--seed);        /* links that lead to a seed */
+  --link-entry: var(--entry);      /* links that lead to an entry */
+  --link-hover: var(--text);
+  --focus: var(--entry);
+  --margin-ink: var(--accent);
+  --principle-ink: #E9DCFF;
+  --line-about: var(--text);       /* entry is about seed */
+  --line-grows: var(--seed);       /* seed grows out of seed */
+  /* a seed's rings are told apart by their numbers, not by colour */
+  --ring-1: var(--accent);
+  --ring-2: var(--accent);
+  --ring-3: var(--accent);
+  --ring-4: var(--accent);
+
+  /* faces (the files are set in astro.config.mjs) */
+  --face-body: var(--font-typewriter), 'Courier New', monospace;
+  --face-label: var(--font-terminal), monospace;
+  --face-name: var(--font-display), monospace;
+
+  /* type sizes */
+  --size-body: 1.0625rem;        /* 17px */
+  --size-small: 0.9375rem;       /* 15px, margin notes */
+  --size-lede: 1.3125rem;        /* 21px */
+  --size-h1: clamp(2rem, 1.2rem + 3.6vw, 3.25rem);
+  --size-h1-entry: clamp(1.9rem, 1.2rem + 3vw, 2.875rem);
+  --size-h1-home: clamp(1.6rem, 1.2rem + 1.6vw, 2.125rem);
+  /* the terminal face runs small, so its steps sit above the body size */
+  --size-label-sm: 1.25rem;      /* 20px: crumbs, legend, captions */
+  --size-label: 1.375rem;        /* 22px: labels, buttons */
+  --size-label-lg: 1.5rem;       /* 24px: page labels, foot links */
+  --size-label-xl: 1.625rem;     /* 26px: section heads in a seed */
+  --size-menu: 2.125rem;         /* 34px: the phone menu */
+  --size-name: 1.5rem;
+
+  --leading-body: 1.65;
+  --leading-tight: 1.12;
+  --tracking-label: 0.06em;
+
+  /* space, on an 4px step */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 2.5rem;
+  --s-8: 3rem;
+  --s-9: 4rem;
+
+  --measure: 42rem;              /* body column, about 66 typewriter characters */
+  --page: 74rem;                 /* 1184px, a 1120px column inside the gutters */
+  --page-wide: 80rem;            /* 1280px, the map */
+  --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+
+  /* lines */
+  --rule-dashed: 1px dashed var(--rule);
+  --rule-dashed-strong: 1px dashed var(--rule-strong);
+  --rule-margin: 1px solid var(--margin-ink);
+
+  /* motion */
+  --slow: 6s;
+  --type-step: 28ms;
+}

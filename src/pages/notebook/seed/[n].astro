@@ -1,0 +1,22 @@
+---
+// The notebook, filtered to one seed. Built ahead of time so no JavaScript is needed.
+import Frame from '../../../layouts/Frame.astro';
+import NotebookIndex from '../../../components/NotebookIndex.astro';
+import { getWorld, pad, url, type Seed } from '../../../lib/world';
+
+export async function getStaticPaths() {
+  const { seeds, entriesOf } = await getWorld();
+  return seeds.filter((s) => entriesOf(s).length > 0).map((seed) => ({ params: { n: pad(seed.data.number) }, props: { seed } }));
+}
+const { seed } = Astro.props as { seed: Seed };
+const num = pad(seed.data.number);
+---
+<Frame
+  title={`Notebook: seed ${num}`}
+  description={`Notebook entries about seed ${num}, ${seed.data.title}.`}
+  place="notebook"
+  og="notebook"
+  crumbs={[{ label: 'map', href: url('/') }, { label: 'notebook', href: url('/notebook/') }, { label: `seed ${num}` }]}
+>
+  <NotebookIndex only={seed} />
+</Frame>

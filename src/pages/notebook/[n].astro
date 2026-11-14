@@ -1,0 +1,143 @@
+---
+// A notebook entry: a narrow column, the principle set apart at the top,
+// margin notes beside the text, and a small "you are here" constellation.
+// An unwritten entry keeps the same frame and says plainly what it promises.
+import { render } from 'astro:content';
+import Frame from '../../layouts/Frame.astro';
+import Mark from '../../components/Mark.astro';
+import Margin from '../../components/Margin.astro';
+import Kept from '../../components/Kept.astro';
+import Constellation from '../../components/Constellation.astro';
+import FootNav from '../../components/FootNav.astro';
+import { getWorld, pad, seedHref, entryHref, url, type Entry } from '../../lib/world';
+
+export async function getStaticPaths() {
+  const { entries } = await getWorld();
+  return entries.map((entry) => ({ params: { n: pad(entry.data.number) }, props: { entry } }));
+}
+
+const { entry } = Astro.props as { entry: Entry };
+const { seedOf, entriesOf, nextEntry } = await getWorld();
+const { Content } = await render(entry);
+const d = entry.data;
+const num = pad(d.number);
+const seed = seedOf(entry);
+const sNum = pad(seed.data.number);
+const written = d.state === 'written';
+const siblings = entriesOf(seed).length;
+const words = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+const count = words[siblings] ?? String(siblings);
+const next = nextEntry(entry);
+const dateBlank = !d.date || /^\[/.test(d.date);
+---
+<Frame
+  title={`Notebook ${num}: ${d.title}`}
+  description={d.description}
+  place="notebook"
+  og={`notebook-${num}`}
+  crumbs={[{ label: 'map', href: url('/') }, { label: 'notebook', href: url('/notebook/') }, { label: num }]}
+>
+  <header class="head">
+    <p class="label label--accent label--lg prompt">
+      notebook {num} · {written ? <span class:list={{ quiet: dateBlank }}>{d.date ?? '[DATE]'}</span> : 'unwritten'}
+    </p>
+    <h1>{d.title}</h1>
+    <a class="about to-seed" href={seedHref(seed)}>
+      <Mark kind="seed" state={seed.data.state} size={16} />
+      about seed {sNum}: {seed.data.title.toLowerCase()}
+    </a>
+  </header>
+
+  {written ? (
+    <>
+      {d.principle && (
+        <section class="principle" aria-label={`Principle ${pad(d.principle.number)}`}>
+          <p class="label">principle {pad(d.principle.number)}</p>
+          <p class="principle-text">{d.principle.text}</p>
+        </section>
+      )}
+      <article class="prose">
+        <Content components={{ Margin, Kept }} />
+      </article>
+    </>
+  ) : (
+    <article class="prose promised">
+      <p>This entry is promised but not written yet.</p>
+      <p class="soft">What it will cover: {d.readout}</p>
+    </article>
+  )}
+
+  <section class="here" aria-label="Where this entry sits">
+    <Constellation seed={seed} here={`entry-${num}`} width={240} height={120} scale={1.7} label={`This entry is the circled light, one of ${count} around seed ${sNum}.`} />
+    <p class="label"><span class="you">you are here:</span> <span class="lower">the circled light, one of {count} around seed {sNum}.</span></p>
+  </section>
+
+  <FootNav
+    seed={seed}
+    here={`entry-${num}`}
+    next={next ? { href: entryHref(next), label: `notebook ${pad(next.data.number)}`, kind: 'entry' } : { href: url('/notebook/'), label: 'the whole notebook' }}
+  />
+</Frame>
+
+<style>
+  .head { display: flex; flex-direction: column; gap: var(--s-3); max-width: 51rem; padding-top: var(--s-6); }
+  h1 { font-size: var(--size-h1-entry); }
+  .quiet { color: var(--text-quiet); }
+  .about { display: inline-flex; align-items: center; gap: 0.625rem; align-self: flex-start; min-height: 44px; }
+
+  .principle {
+    max-width: 51rem;
+    margin-top: var(--s-6);
+    padding: 1.75rem 0;
+    border-top: var(--rule-dashed);
+    border-bottom: var(--rule-dashed);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+  .principle-text { font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.625rem); line-height: 1.35; font-style: italic; color: var(--principle-ink); }
+
+  /* text column and margin column; a margin note sits on its paragraph's row */
+  .prose {
+    margin-top: var(--s-7);
+    display: grid;
+    grid-template-columns: minmax(0, 42.5rem);
+    gap: 1.375rem 3.5rem;
+    align-items: start;
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+  .prose > :global(*) { grid-column: 1; }
+  .prose :global(.with-margin) { display: flex; flex-direction: column; gap: 1.375rem; }
+  .prose :global(.margin-note) {
+    font-size: var(--size-small);
+    line-height: 1.5;
+    color: var(--margin-ink);
+    border-top: var(--rule-margin);
+    padding-top: 0.625rem;
+  }
+  .prose :global(.margin-note .blank) { color: var(--margin-ink); }
+  @media (min-width: 62rem) {
+    .prose { grid-template-columns: minmax(0, 42.5rem) minmax(13rem, 1fr); }
+    .prose :global(.margin-note) { grid-column: 2; margin-top: 0.3rem; }
+  }
+
+  .prose :global(.kept) { background: var(--ground-raised); padding: 1.375rem var(--s-5); display: flex; flex-direction: column; gap: var(--s-1); }
+  .prose :global(.kept ol) { list-style: none; padding: 0; margin: 0; counter-reset: rule; }
+  .prose :global(.kept li) { counter-increment: rule; }
+  .prose :global(.kept li)::before { content: counter(rule, decimal-leading-zero) '  '; color: var(--text-quiet); white-space: pre; }
+  .prose :global(.signoff) { color: var(--text-quiet); }
+  .promised .soft { color: var(--text-soft); }
+
+  .here {
+    margin-top: var(--s-8);
+    padding-top: var(--s-5);
+    border-top: var(--rule-dashed);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-5) var(--s-7);
+    align-items: center;
+  }
+  .here .label { flex: 1 1 17.5rem; font-size: var(--size-label-sm); }
+  .lower { text-transform: none; }
+</style>

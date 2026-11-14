@@ -1,0 +1,19 @@
+---
+// A light's mark as a small inline icon, for rows, links and the legend.
+import MarkShape from './MarkShape.astro';
+
+interface Props {
+  kind: 'seed' | 'entry';
+  state: string;
+  size?: number;
+}
+const { kind, state, size = 16 } = Astro.props;
+const h = size / 2;
+const r = kind === 'seed' ? h - 0.5 : h * 0.62;
+---
+<svg class="mark-icon" aria-hidden="true" width={size} height={size} viewBox={`${-h} ${-h} ${size} ${size}`}>
+  <MarkShape kind={kind} state={state} r={r} />
+</svg>
+<style>
+  .mark-icon { display: inline-block; flex: none; overflow: visible; vertical-align: -0.1em; }
+</style>

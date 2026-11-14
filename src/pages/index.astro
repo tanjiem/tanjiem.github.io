@@ -1,0 +1,129 @@
+---
+// Home: the map. A typed readout, a typed index of every light, the star map.
+import Frame from '../layouts/Frame.astro';
+import StarMap from '../components/StarMap.astro';
+import Readout from '../components/Readout.astro';
+import Mark from '../components/Mark.astro';
+import Contact from '../components/Contact.astro';
+import { getWorld, pad, seedHref, entryHref, url } from '../lib/world';
+
+const { seeds, entries } = await getWorld();
+---
+<Frame
+  title="Tanjie McMeans"
+  description="Tanjie McMeans, applied AI engineer in Chicago. A star map of the small AI systems I plant, and a notebook of how they grow."
+  place="map"
+  og="home"
+  wide
+>
+  <div class="home">
+    <div class="readout-area">
+      <Readout>
+        <p class="label label--accent prompt">start here</p>
+        <h1>I plant small AI systems, then write down honestly how they grow.</h1>
+        <p class="soft">I'm Tanjie, an applied AI engineer in Chicago. Every light on the map is either a seed, which is what I call a project, or a notebook entry about one.</p>
+        <p class="soft">Pick a light, or use the index below.</p>
+      </Readout>
+    </div>
+
+    <div class="map-area">
+      <StarMap />
+    </div>
+
+    <nav class="index" aria-label="Index of every light on the map">
+      <h2 class="label" id="seeds">Seeds</h2>
+      <ul class="rows">
+        {seeds.map((s) => (
+          <li>
+            <a href={seedHref(s)} data-for={`seed-${pad(s.data.number)}`}>
+              <span class="num seed-num">{pad(s.data.number)}</span>
+              <span class="t">{s.data.title}</span>
+              <span class="st">{s.data.state}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <h2 class="label" id="notebook">Notebook</h2>
+      <ul class="rows">
+        {entries.map((e) => (
+          <li>
+            <a href={entryHref(e)} data-for={`entry-${pad(e.data.number)}`}>
+              <span class="num entry-num">{pad(e.data.number)}</span>
+              <span class="t">{e.data.title}</span>
+              <span class="st">{e.data.state === 'written' ? (e.data.date ?? 'written') : 'unwritten'}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  <footer class="foot">
+    <div class="about">
+      <h2 class="label">About</h2>
+      <p class="soft">About five years of full-stack engineering, and a master's in computer science focused on AI that I finish this term at the University of Illinois. Before that I taught special education for five years. Octavia Butler is why this place looks the way it does.</p>
+      <p><a href={url("/about/")}>more about the gardener</a></p>
+    </div>
+    <div class="write">
+      <h2 class="label">Write to me</h2>
+      <Contact resume />
+    </div>
+  </footer>
+</Frame>
+
+<style>
+  .home {
+    display: grid;
+    gap: var(--s-6) var(--s-7);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'readout' 'map' 'index';
+    padding-top: var(--s-5);
+  }
+  .readout-area { grid-area: readout; }
+  .map-area { grid-area: map; }
+  .index { grid-area: index; }
+
+  /* two columns only once the map column can keep its labels readable */
+  @media (min-width: 72rem) {
+    .home {
+      grid-template-columns: minmax(20rem, 32.5rem) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas: 'readout map' 'index map';
+    }
+  }
+
+  h1 { font-size: var(--size-h1-home); line-height: 1.2; }
+  .soft { color: var(--text-soft); }
+
+  .index h2 { margin: var(--s-5) 0 var(--s-1); }
+  .index h2:first-child { margin-top: 0; }
+  .rows { border-bottom: var(--rule-dashed); }
+  .rows a {
+    display: grid;
+    grid-template-columns: 2.25ch 1fr auto;
+    gap: var(--s-3);
+    align-items: baseline;
+    padding: var(--s-2) 0;
+    min-height: 44px;
+    border-top: var(--rule-dashed);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .rows .t { text-transform: lowercase; }
+  .rows a:hover .t, .rows a:focus-visible .t { text-decoration: underline; color: var(--link-hover); }
+  .num.seed-num { color: var(--seed); }
+  .num.entry-num { color: var(--entry); }
+  .st { color: var(--text-quiet); text-align: right; }
+
+  .foot {
+    margin-top: var(--s-8);
+    padding-top: var(--s-5);
+    border-top: var(--rule-dashed);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-5) var(--s-8);
+  }
+  .about { flex: 999 1 26rem; display: flex; flex-direction: column; gap: var(--s-3); max-width: var(--measure); }
+  .write { flex: 1 1 14rem; }
+</style>

@@ -1,0 +1,14 @@
+---
+import Frame from '../../layouts/Frame.astro';
+import NotebookIndex from '../../components/NotebookIndex.astro';
+import { url } from '../../lib/world';
+---
+<Frame
+  title="Notebook"
+  description="What I wrote down while the seeds grew. Every entry is about one seed."
+  place="notebook"
+  og="notebook"
+  crumbs={[{ label: 'map', href: url('/') }, { label: 'notebook' }]}
+>
+  <NotebookIndex />
+</Frame>

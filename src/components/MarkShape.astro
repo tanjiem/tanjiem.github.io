@@ -1,0 +1,27 @@
+---
+// One light's mark, drawn at 0,0. Used inside an <svg>.
+// The legend promises exactly these meanings:
+//   seed growing          filled four-point star
+//   seed not yet planted  dashed outline star
+//   seed bearing          filled star (its own mark is the owner's decision)
+//   entry written         filled diamond
+//   entry unwritten       outline diamond
+import { starPath, diamondPath } from '../lib/marks';
+
+interface Props {
+  kind: 'seed' | 'entry';
+  state: string;
+  r: number;
+}
+const { kind, state, r } = Astro.props;
+const sw = Math.max(1, +(r / 10).toFixed(2));
+---
+{kind === 'seed' && state === 'growing' && <path class="mark" d={starPath(r)} style="fill:var(--seed)" />}
+{kind === 'seed' && state === 'bearing' && <path class="mark" d={starPath(r)} style="fill:var(--seed)" />}
+{kind === 'seed' && state === 'not yet planted' && (
+  <path class="mark" d={starPath(r)} style="fill:var(--ground);stroke:var(--seed)" stroke-width={sw * 1.2} stroke-dasharray={`${(sw * 2.4).toFixed(1)} ${(sw * 2.4).toFixed(1)}`} />
+)}
+{kind === 'entry' && state === 'written' && <path class="mark" d={diamondPath(r)} style="fill:var(--entry)" />}
+{kind === 'entry' && state === 'unwritten' && (
+  <path class="mark" d={diamondPath(r)} style="fill:var(--ground);stroke:var(--entry)" stroke-width={sw * 1.3} />
+)}

@@ -1,0 +1,99 @@
+---
+// About the gardener.
+import Frame from '../layouts/Frame.astro';
+import Contact from '../components/Contact.astro';
+import FootNav from '../components/FootNav.astro';
+import { url } from '../lib/world';
+
+// The typed record. Bracketed values are blanks for the owner to fill.
+const record: [string, string][] = [
+  ['name', 'Tanjanequa McMeans, Tanjie to everyone'],
+  ['based in', 'Chicago'],
+  ['now', "finishing a master's in computer science, focused on AI, at the University of Illinois"],
+  ['before', 'about five years of full-stack engineering'],
+  ['before that', 'five years teaching special education'],
+  ['looking for', 'applied AI and forward deployed engineering work'],
+  ['favorite color', 'purple, as you can see'],
+];
+const principles = [
+  { text: 'Write the prediction down before the outcome can flatter you.' },
+  { text: '[YOUR SECOND PRINCIPLE]', blank: true },
+  { text: '[YOUR THIRD PRINCIPLE]', blank: true },
+];
+---
+<Frame
+  title="About the gardener"
+  description="I used to teach special education. Now I build AI systems and check whether they work. About Tanjie McMeans, the gardener."
+  place="about"
+  og="about"
+  crumbs={[{ label: 'map', href: url('/') }, { label: 'about' }]}
+>
+  <header class="head">
+    <div class="titles">
+      <p class="label label--accent prompt">about the gardener</p>
+      <h1>I'm Tanjie. I used to teach. Now I build AI systems and check whether they work.</h1>
+      <p class="blank">[TWO OR THREE SENTENCES IN YOUR OWN VOICE: what you care about building, and why]</p>
+    </div>
+    <figure class="photo">
+      <div class="frame"><span class="label label--accent">[YOUR PHOTO]</span></div>
+      <figcaption>chicago, <span class="blank">[YEAR]</span></figcaption>
+    </figure>
+  </header>
+
+  <section class="record" aria-labelledby="record-h">
+    <h2 class="label" id="record-h">The record</h2>
+    <dl>
+      {record.map(([k, v]) => (
+        <div>
+          <dt>{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  <div class="two">
+    <section aria-labelledby="how-h">
+      <h2 class="label" id="how-h">How I work</h2>
+      <ol class="principles">
+        {principles.map((p, i) => (
+          <li><span class="n">{String(i + 1).padStart(2, '0')}</span> <span class:list={{ blank: p.blank }}>{p.text}</span></li>
+        ))}
+      </ol>
+    </section>
+    <section aria-labelledby="why-h">
+      <h2 class="label" id="why-h">Why this place looks the way it does</h2>
+      <p>Octavia Butler. I keep going back to Lilith's Brood, the Patternist books and the Parables. Her futures are grown, linked and written down as they happen, so my projects are seeds, the map links them, and the notebook keeps the record.</p>
+    </section>
+  </div>
+
+  <section class="write" aria-labelledby="write-h">
+    <h2 class="label" id="write-h">Write to me</h2>
+    <Contact resume inline />
+  </section>
+
+  <FootNav />
+</Frame>
+
+<style>
+  .head { display: flex; flex-wrap: wrap; gap: var(--s-6) var(--s-8); align-items: flex-start; padding-top: var(--s-6); }
+  .titles { flex: 999 1 30rem; display: flex; flex-direction: column; gap: var(--s-4); }
+  h1 { font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem); line-height: 1.2; }
+  .titles .blank { max-width: 38rem; font-size: 1rem; }
+  .photo { flex: 1 1 15rem; max-width: 17.5rem; margin: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+  .frame { aspect-ratio: 7 / 8; border: var(--rule-dashed-strong); display: grid; place-items: center; }
+  figcaption { font-family: var(--face-label); font-size: var(--size-label-sm); color: var(--text-quiet); }
+
+  .record { margin-top: var(--s-8); }
+  dl { margin: var(--s-3) 0 0; border-bottom: var(--rule-dashed); }
+  dl > div { display: grid; grid-template-columns: 12.5rem 1fr; gap: var(--s-1) var(--s-4); padding: 0.75rem 0; border-top: var(--rule-dashed); }
+  dt { color: var(--accent); }
+  @media (max-width: 40rem) { dl > div { grid-template-columns: 1fr; } }
+
+  .two { margin-top: var(--s-8); display: flex; flex-wrap: wrap; gap: var(--s-6) var(--s-8); }
+  .two > section { flex: 1 1 22rem; display: flex; flex-direction: column; gap: var(--s-3); }
+  .principles { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+  .n { color: var(--accent); }
+
+  .write { margin-top: var(--s-8); padding-top: var(--s-5); border-top: var(--rule-dashed); display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-6); }
+</style>

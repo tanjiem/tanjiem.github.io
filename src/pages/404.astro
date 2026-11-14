@@ -1,0 +1,18 @@
+---
+import Frame from '../layouts/Frame.astro';
+import { url } from '../lib/world';
+---
+<Frame title="No light here" description="There is no light at this address." place="none" og="home">
+  <div class="lost">
+    <p class="label label--accent label--lg prompt">404 · nothing planted here</p>
+    <h1>There is no light at this address.</h1>
+    <p class="soft">It may have moved, or it was never planted. The map shows every seed and entry there is.</p>
+    <p><a class="term-link" href={url('/')}>&lt;- back to the map</a></p>
+  </div>
+</Frame>
+
+<style>
+  .lost { display: flex; flex-direction: column; gap: var(--s-4); max-width: 42rem; padding-top: var(--s-8); }
+  h1 { font-size: var(--size-h1-entry); }
+  .soft { color: var(--text-soft); }
+</style>

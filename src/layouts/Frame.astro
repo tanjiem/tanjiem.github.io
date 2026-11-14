@@ -1,0 +1,64 @@
+---
+// The page frame every page shares: head, fonts, skip link, top bar.
+import { Font } from 'astro:assets';
+import TopBar, { type Place, type Crumb } from '../components/TopBar.astro';
+import { url } from '../lib/world';
+import { readTokens } from '../lib/tokens.mjs';
+import '../styles/tokens.css';
+import '../styles/base.css';
+
+interface Props {
+  title: string;
+  description: string;
+  place: Place;
+  crumbs?: Crumb[];
+  /** name of the share image under /og/, without .png */
+  og: string;
+  /** the main element's width: the map is wider than inner pages */
+  wide?: boolean;
+}
+const { title, description, place, crumbs, og, wide = false } = Astro.props;
+const site = Astro.site!;
+const canonical = new URL(Astro.url.pathname, site).href;
+const image = new URL(url(`/og/${og}.png`), site).href;
+const ground = readTokens().ground;
+const fullTitle = title === 'Tanjie McMeans' ? title : `${title} · Tanjie McMeans`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="sitemap" href={url('/sitemap-index.xml')} />
+    <meta name="theme-color" content={ground} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Tanjie McMeans" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <Font cssVariable="--font-typewriter" preload />
+    <Font cssVariable="--font-terminal" preload />
+    <Font cssVariable="--font-display" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to the page</a>
+    <TopBar place={place} crumbs={crumbs} wide={wide} />
+    <main id="main" class:list={['page', { wide }]}>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  main { padding-top: var(--s-2); padding-bottom: var(--s-9); }
+  main.wide { max-width: var(--page-wide); }
+</style>

@@ -1,0 +1,82 @@
+---
+// A small piece of the star map: one seed and its entries, drawn from their
+// real map positions. The light for the current page is circled.
+// With no seed given, it draws the whole map in miniature.
+import MarkShape from './MarkShape.astro';
+import { getWorld, pad, seedRadius, type Seed } from '../lib/world';
+import { curveBetween } from '../lib/marks';
+
+interface Props {
+  seed?: Seed;
+  /** "seed-01" or "entry-02": the light to circle */
+  here?: string;
+  width: number;
+  height: number;
+  /** text for screen readers; leave out when the constellation is decoration inside a labelled link */
+  label?: string;
+  scale?: number;
+}
+const { seed, here, width: W, height: H, label, scale: markScale = 1 } = Astro.props;
+const { seeds, entriesOf, parentOf } = await getWorld();
+
+const shownSeeds = seed ? [seed] : seeds;
+const pts = shownSeeds.flatMap((s) => [
+  { key: `seed-${pad(s.data.number)}`, kind: 'seed' as const, state: s.data.state, ...s.data.map, r: seedRadius(entriesOf(s).length) },
+  ...entriesOf(s).map((e) => ({ key: `entry-${pad(e.data.number)}`, kind: 'entry' as const, state: e.data.state, ...e.data.map, r: 9 })),
+]);
+
+const P = Math.min(W, H) * 0.18;
+const xs = pts.map((p) => p.x);
+const ys = pts.map((p) => p.y);
+const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+const k = Math.min((W - 2 * P) / Math.max(x1 - x0, 1), (H - 2 * P) / Math.max(y1 - y0, 1), 1);
+const ox = (W - (x1 - x0) * k) / 2;
+const oy = (H - (y1 - y0) * k) / 2;
+const place = (p: { x: number; y: number }) => ({ x: +(ox + (p.x - x0) * k).toFixed(1), y: +(oy + (p.y - y0) * k).toFixed(1) });
+const mr = (p: (typeof pts)[number]) => Math.max(p.kind === 'seed' ? 4 : 2.5, p.r * k * 1.4) * markScale;
+
+const placed = pts.map((p) => ({ ...p, at: place(p), mr: mr(p) }));
+const byKey = new Map(placed.map((p) => [p.key, p]));
+
+const lines = shownSeeds.flatMap((s) => {
+  const sp = byKey.get(`seed-${pad(s.data.number)}`)!;
+  return entriesOf(s).map((e) => {
+    const ep = byKey.get(`entry-${pad(e.data.number)}`)!;
+    return { d: curveBetween(sp.at, ep.at, sp.mr + 2, ep.mr + 2, 0.12), grows: false };
+  });
+});
+const grows = seed
+  ? []
+  : seeds.filter((s) => parentOf(s)).map((s) => {
+      const a = byKey.get(`seed-${pad(parentOf(s)!.data.number)}`)!;
+      const b = byKey.get(`seed-${pad(s.data.number)}`)!;
+      return { d: curveBetween(a.at, b.at, a.mr + 2, b.mr + 2, -0.1), grows: true };
+    });
+const herePt = here ? byKey.get(here) : undefined;
+---
+<svg
+  class="constellation"
+  width={W}
+  height={H}
+  viewBox={`0 0 ${W} ${H}`}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+>
+  {[...lines, ...grows].map((l) => <path d={l.d} class={l.grows ? 'c-grows' : 'c-about'} />)}
+  {herePt && <circle class={`c-here c-here--${herePt.kind}`} cx={herePt.at.x} cy={herePt.at.y} r={herePt.mr + 6} />}
+  {placed.map((p) => (
+    <g transform={`translate(${p.at.x} ${p.at.y})`}>
+      <MarkShape kind={p.kind} state={p.state} r={p.mr} />
+    </g>
+  ))}
+</svg>
+
+<style>
+  .constellation { flex: none; overflow: visible; }
+  .c-about { fill: none; stroke: var(--line-about); stroke-opacity: 0.55; stroke-width: 1; }
+  .c-grows { fill: none; stroke: var(--line-grows); stroke-width: 1; stroke-dasharray: 3 3; }
+  .c-here { fill: none; stroke-width: 1.2; }
+  .c-here--entry { stroke: var(--entry); }
+  .c-here--seed { stroke: var(--seed); }
+</style>

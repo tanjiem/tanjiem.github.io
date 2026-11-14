@@ -1,0 +1,25 @@
+---
+import Ledger from './Ledger.astro';
+import FootNav from './FootNav.astro';
+import type { Seed } from '../lib/world';
+
+interface Props {
+  only?: Seed;
+}
+---
+<header class="head">
+  <p class="label label--accent label--lg prompt">notebook</p>
+  <h1>What I wrote down while the seeds grew.</h1>
+  <p class="soft">Every entry is about one seed. Hollow marks are entries I have promised but not written.</p>
+</header>
+<div class="ledger-wrap">
+  <Ledger only={Astro.props.only} />
+</div>
+<FootNav />
+
+<style>
+  .head { display: flex; flex-direction: column; gap: var(--s-3); max-width: 47.5rem; padding-top: var(--s-6); }
+  h1 { font-size: var(--size-h1-entry); }
+  .soft { color: var(--text-soft); }
+  .ledger-wrap { margin-top: var(--s-6); display: flex; flex-direction: column; gap: var(--s-6); }
+</style>

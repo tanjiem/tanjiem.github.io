@@ -1,0 +1,64 @@
+---
+// The foot of every inner page: the way back to the map, and the next light.
+// On wide screens the way home also sits fixed in the bottom-left corner,
+// carrying a small constellation of where you are.
+import Constellation from './Constellation.astro';
+import { url, type Seed } from '../lib/world';
+
+interface Props {
+  next?: { href: string; label: string; kind?: 'seed' | 'entry' };
+  seed?: Seed;
+  here?: string;
+}
+const { next, seed, here } = Astro.props;
+---
+<nav class="foot" aria-label="Back to the map and onward">
+  <a class="term-link" href={url('/')}><span class="nowrap">&lt;-</span>&nbsp;back to the map</a>
+  {next && <a class:list={['term-link', next.kind && `to-${next.kind}`]} href={next.href}>{next.label}&nbsp;<span class="nowrap">-&gt;</span></a>}
+</nav>
+
+<a class="way-home" href={url('/')} aria-hidden="true" tabindex="-1">
+  <Constellation seed={seed} here={here} width={44} height={36} />
+  <span class="words">back to the map</span>
+</a>
+
+<style>
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+    justify-content: space-between;
+    border-top: var(--rule-dashed);
+    padding-top: var(--s-5);
+    margin-top: var(--s-8);
+  }
+  .way-home { display: none; }
+  /* only where the corner is empty: wide screens with room beside the column */
+  @media (min-width: 90rem) {
+    .way-home {
+      position: fixed;
+      left: var(--s-5);
+      bottom: var(--s-5);
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-3);
+      min-height: 56px;
+      padding: 0 0.625rem;
+      border: 1px solid var(--accent);
+      background: var(--ground);
+      color: var(--text);
+      text-decoration: none;
+      font-family: var(--face-label);
+      font-size: var(--size-label);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .way-home:hover { background: var(--accent); color: var(--ground); }
+    .words { display: none; }
+  }
+  @media (min-width: 110rem) {
+    .way-home { padding: 0 1.125rem 0 0.75rem; }
+    .words { display: inline; }
+  }
+</style>

@@ -1,0 +1,156 @@
+---
+// The readout beside the map. Its slot is the opening text. Choosing a light
+// swaps in that light's readout, prepared here at build time.
+//
+// With JavaScript off, nothing is swapped and every light is a plain link.
+// With it on: pointing at a light and clicking chooses it (a second click opens
+// it); reaching it by keyboard chooses it and Enter opens it; Escape returns to
+// the opening text. On narrow screens a tap simply opens the light's page.
+import { getWorld, pad, seedHref, entryHref, listNumbers } from '../lib/world';
+
+const { seeds, entries, entriesOf, seedOf, childrenOf } = await getWorld();
+
+const readouts = [
+  ...seeds.map((s) => {
+    const es = entriesOf(s);
+    const kids = childrenOf(s);
+    const follow = [
+      es.length === 1 ? `Notebook entry ${pad(es[0].data.number)} follows it.` : '',
+      es.length > 1 ? `Notebook entries ${listNumbers(es.map((e) => e.data.number))} follow it.` : '',
+      kids.length ? `Seed ${listNumbers(kids.map((k) => k.data.number))} will grow out of it.` : '',
+    ].filter(Boolean).join(' ');
+    return {
+      key: `seed-${pad(s.data.number)}`,
+      label: `seed ${pad(s.data.number)} · ${s.data.state}`,
+      title: s.data.title,
+      text: s.data.readout,
+      follow,
+      href: seedHref(s),
+      open: `open seed ${pad(s.data.number)}`,
+    };
+  }),
+  ...entries.map((e) => ({
+    key: `entry-${pad(e.data.number)}`,
+    label: `notebook ${pad(e.data.number)} · ${e.data.state === 'written' ? (e.data.date ?? 'written') : 'unwritten'}`,
+    title: e.data.title,
+    text: e.data.readout,
+    follow: `About seed ${pad(seedOf(e).data.number)}.`,
+    href: entryHref(e),
+    open: e.data.state === 'written' ? `read notebook ${pad(e.data.number)}` : `open notebook ${pad(e.data.number)}`,
+  })),
+];
+---
+<section class="readout" data-readout aria-label="Readout">
+  <div class="intro" data-intro>
+    <slot />
+  </div>
+  <div class="chosen" data-chosen hidden></div>
+  <p class="visually-hidden" aria-live="polite" data-announce></p>
+
+  {readouts.map((r) => (
+    <template data-for={r.key}>
+      <p class="label label--accent prompt" data-type>{r.label}</p>
+      <h2>{r.title}</h2>
+      <p class="soft">{r.text}</p>
+      {r.follow && <p class="soft">{r.follow}</p>}
+      <p data-open><a class={`open to-${r.key.split('-')[0]}`} href={r.href}>{r.open}&nbsp;<span class="nowrap">-&gt;</span></a></p>
+    </template>
+  ))}
+</section>
+
+<style>
+  .readout { min-height: 21rem; }
+  .intro, .chosen { display: flex; flex-direction: column; gap: var(--s-3); }
+  .chosen[hidden] { display: none; }
+  .readout :global(h2) { font-size: clamp(1.5rem, 1.2rem + 1vw, 1.875rem); line-height: 1.2; font-weight: 700; text-wrap: balance; }
+  .readout :global(.soft) { color: var(--text-soft); }
+  .readout :global(.open) { font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+  @media (max-width: 71.99rem) { .readout { min-height: 0; } }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-readout]');
+  const map = document.querySelector<SVGSVGElement>('[data-map] svg');
+  if (root && map) {
+    const intro = root.querySelector<HTMLElement>('[data-intro]')!;
+    const chosen = root.querySelector<HTMLElement>('[data-chosen]')!;
+    const announce = root.querySelector<HTMLElement>('[data-announce]')!;
+    const lights = [...map.querySelectorAll<SVGAElement>('a.light')];
+    const wide = matchMedia('(min-width: 72rem)');
+    const still = matchMedia('(prefers-reduced-motion: reduce)');
+    let current: string | null = null;
+    let pointing = false;
+    let typing = 0;
+
+    const mark = (key: string | null) =>
+      lights.forEach((l) => l.classList.toggle('is-chosen', l.dataset.light === key));
+
+    function typeIn(el: HTMLElement) {
+      const full = el.textContent ?? '';
+      el.setAttribute('aria-hidden', 'true');
+      if (still.matches) return;
+      el.textContent = '';
+      let i = 0;
+      clearInterval(typing);
+      typing = window.setInterval(() => {
+        el.textContent = full.slice(0, ++i) + (i < full.length ? '_' : '');
+        if (i >= full.length) clearInterval(typing);
+      }, 28);
+    }
+
+    // speak is false when the choice came from focus: the link's own label is read then
+    function choose(key: string, speak = true) {
+      const tpl = root!.querySelector<HTMLTemplateElement>(`template[data-for="${key}"]`);
+      if (!tpl || key === current) return;
+      current = key;
+      chosen.replaceChildren(tpl.content.cloneNode(true));
+      chosen.hidden = false;
+      intro.classList.add('visually-hidden');
+      announce.textContent = !speak ? '' : [...chosen.querySelectorAll('h2, p:not([data-type]):not([data-open])')].map((n) => n.textContent).join(' ');
+      const t = chosen.querySelector<HTMLElement>('[data-type]');
+      if (t) typeIn(t);
+      mark(key);
+    }
+
+    function clear() {
+      if (!current) return;
+      current = null;
+      clearInterval(typing);
+      chosen.hidden = true;
+      chosen.replaceChildren();
+      intro.classList.remove('visually-hidden');
+      announce.textContent = '';
+      mark(null);
+    }
+
+    for (const light of lights) {
+      const key = light.dataset.light!;
+      light.addEventListener('pointerdown', () => { pointing = true; });
+      light.addEventListener('focus', () => { if (!pointing) choose(key, false); });
+      light.addEventListener('click', (e) => {
+        pointing = false;
+        if (e.detail === 0 || !wide.matches) return; // keyboard Enter, or a phone: just open it
+        if (current !== key) {
+          e.preventDefault();
+          choose(key);
+        }
+      });
+    }
+
+    window.addEventListener('pointerup', () => { setTimeout(() => { pointing = false; }, 0); });
+    map.addEventListener('click', (e) => {
+      if (!(e.target as Element).closest('a.light')) clear();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') clear(); });
+
+    // pointing at a row in the index lights up its mark on the map
+    for (const row of document.querySelectorAll<HTMLElement>('[data-for]:not(template)')) {
+      const on = () => { if (!current) lights.forEach((l) => l.classList.toggle('is-chosen', l.dataset.light === row.dataset.for)); };
+      const off = () => { if (!current) mark(null); };
+      row.addEventListener('mouseenter', on);
+      row.addEventListener('mouseleave', off);
+      row.addEventListener('focus', on);
+      row.addEventListener('blur', off);
+    }
+  }
+</script>

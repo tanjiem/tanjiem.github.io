@@ -1,0 +1,14 @@
+---
+// A margin note: second thoughts beside the paragraph they argue with.
+// Used in entry files as <Margin note="...">paragraph</Margin>.
+// On a phone the note drops below its paragraph.
+interface Props {
+  note: string;
+}
+const { note } = Astro.props;
+const bracketed = /^\[.*\]$/.test(note.trim());
+---
+<div class="with-margin"><slot /></div>
+<aside class="margin-note" aria-label="Margin note">
+  <span class="tag">margin:</span> <span class:list={{ blank: bracketed }}>{note}</span>
+</aside>

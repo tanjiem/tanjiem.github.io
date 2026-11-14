@@ -1,0 +1,180 @@
+---
+// The star map, drawn at build time from the seed and entry files.
+// Positions are hand-placed in each file's frontmatter. Every light is a
+// real link, so the map works with JavaScript off. The legend underneath is
+// generated from what is actually on the map.
+import MarkShape from './MarkShape.astro';
+import Legend from './Legend.astro';
+import { getWorld, pad, seedHref, entryHref, seedRadius, listNumbers } from '../lib/world';
+import { curveBetween } from '../lib/marks';
+
+const world = await getWorld();
+const { seeds, entries, entriesOf, seedOf, parentOf, childrenOf } = world;
+
+const W = 760;
+const H = 640;
+const ENTRY_R = 9;
+
+const radius = new Map(seeds.map((s) => [s.id, seedRadius(entriesOf(s).length)]));
+
+// faint background stars: atmosphere only, never links, never in the legend
+const dust = [
+  [40, 60, 1.5], [220, 40, 1], [430, 70, 1.5], [720, 50, 1], [470, 300, 1], [60, 250, 1],
+  [700, 420, 1.5], [90, 520, 1.5], [250, 590, 1], [640, 600, 1], [400, 170, 1], [560, 330, 1],
+  [735, 230, 1], [20, 420, 1], [380, 620, 1],
+];
+
+// labels: the title in the typewriter face, the line under it in the terminal face
+type Anchor = 'start' | 'middle' | 'end';
+function label(x: number, y: number, r: number, side: string, title: string, sub: string, titleSize: number) {
+  const tw = title.length * titleSize * 0.6;
+  const sw = sub.length * 19 * 0.42;
+  const w = Math.max(tw, sw);
+  let anchor: Anchor = 'middle';
+  let lx = x;
+  let ty: number;
+  // clear the chosen-light ring, which sits 11 beyond a seed and at 17 around an entry
+  const gap = r > ENTRY_R ? r + 18 : r + 12;
+  if (side === 'right') { anchor = 'start'; lx = x + gap; ty = y - 4; }
+  else if (side === 'left') { anchor = 'end'; lx = x - gap; ty = y - 4; }
+  else if (side === 'above') { ty = y - gap - 22; }
+  else { ty = y + gap + 14; }
+  // keep labels inside the map
+  if (anchor === 'middle') lx = Math.min(Math.max(lx, 8 + w / 2), W - 8 - w / 2);
+  if (anchor === 'start' && lx + w > W - 8) { anchor = 'end'; lx = W - 8; }
+  return { anchor, lx: +lx.toFixed(1), ty, sy: ty + 22 };
+}
+
+const lights = [
+  ...seeds.map((s) => {
+    const r = radius.get(s.id)!;
+    const sub = `SEED ${pad(s.data.number)} · ${s.data.state.toUpperCase()}`;
+    const kids = childrenOf(s);
+    const es = entriesOf(s);
+    const parent = parentOf(s);
+    const aria = [
+      `Seed ${pad(s.data.number)}: ${s.data.title}, ${s.data.state}`,
+      es.length ? `${es.length === 1 ? 'entry' : 'entries'} ${listNumbers(es.map((e) => e.data.number))} about it` : '',
+      parent ? `grows out of seed ${pad(parent.data.number)}` : '',
+      kids.length ? `seed ${listNumbers(kids.map((k) => k.data.number))} grows out of it` : '',
+    ].filter(Boolean).join('; ');
+    return {
+      key: `seed-${pad(s.data.number)}`,
+      kind: 'seed' as const,
+      state: s.data.state,
+      href: seedHref(s),
+      x: s.data.map.x,
+      y: s.data.map.y,
+      r,
+      hit: r + 16,
+      title: s.data.title,
+      sub,
+      aria,
+      lab: label(s.data.map.x, s.data.map.y, r, s.data.map.label, s.data.title, sub, 17),
+    };
+  }),
+  ...entries.map((e) => {
+    const sub = `NOTEBOOK ${pad(e.data.number)}`;
+    const t = e.data.mapLabel ?? e.data.title;
+    return {
+      key: `entry-${pad(e.data.number)}`,
+      kind: 'entry' as const,
+      state: e.data.state,
+      href: entryHref(e),
+      x: e.data.map.x,
+      y: e.data.map.y,
+      r: ENTRY_R,
+      hit: 24,
+      title: t,
+      sub,
+      aria: `Notebook ${pad(e.data.number)}: ${e.data.title}, ${e.data.state}, about seed ${pad(seedOf(e).data.number)}`,
+      lab: label(e.data.map.x, e.data.map.y, ENTRY_R, e.data.map.label, t, sub, 15),
+    };
+  }),
+];
+
+// solid pale lines: this entry is about this seed
+const aboutLines = seeds.flatMap((s) =>
+  entriesOf(s).map((e, i) =>
+    curveBetween(s.data.map, e.data.map, radius.get(s.id)! + 5, ENTRY_R + 5, i % 2 ? -0.12 : 0.12),
+  ),
+);
+// dashed gold lines: this seed grows out of that seed
+const growLines = seeds
+  .filter((s) => parentOf(s))
+  .map((s) => {
+    const p = parentOf(s)!;
+    return curveBetween(p.data.map, s.data.map, radius.get(p.id)! + 5, radius.get(s.id)! + 6, -0.1);
+  });
+
+const summary = `Star map of ${seeds.length} seeds and ${entries.length} notebook entries. ` +
+  seeds.map((s) => lights.find((l) => l.key === `seed-${pad(s.data.number)}`)!.aria).join('. ') + '. The index lists every light as text.';
+---
+<figure class="map" data-map>
+  <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={summary}>
+    <g aria-hidden="true">
+      {seeds.filter((s) => s.data.state !== 'not yet planted').map((s) => (
+        <circle class="halo" cx={s.data.map.x} cy={s.data.map.y} r={radius.get(s.id)! * 7} />
+      ))}
+      {dust.map(([x, y, r], i) => (
+        <circle class:list={['dust', { twinkle: i % 3 === 0 }]} cx={x} cy={y} r={r} style={`animation-delay:${(i * 0.7) % 6}s`} />
+      ))}
+      {aboutLines.map((d) => <path class="line-about" d={d} />)}
+      {growLines.map((d) => <path class="line-grows" d={d} />)}
+    </g>
+
+    {lights.map((l) => (
+      <a class={`light light--${l.kind}`} href={l.href} data-light={l.key} aria-label={l.aria}>
+        <g transform={`translate(${l.x} ${l.y})`}>
+          <circle class="hit" r={l.hit} />
+          <circle class="sel" r={l.kind === 'seed' ? l.r + 11 : 17} />
+          {l.kind === 'seed' && l.state !== 'not yet planted' && <circle class="glow" r={l.r} />}
+          <MarkShape kind={l.kind} state={l.state} r={l.r} />
+        </g>
+        <text class="t-title" x={l.lab.lx} y={l.lab.ty} text-anchor={l.lab.anchor}>{l.title}</text>
+        <text class="t-sub" x={l.lab.lx} y={l.lab.sy} text-anchor={l.lab.anchor}>{l.sub}</text>
+      </a>
+    ))}
+  </svg>
+  <figcaption>
+    <Legend />
+  </figcaption>
+</figure>
+
+<style>
+  .map { margin: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+  svg { width: 100%; height: auto; overflow: visible; }
+
+  .halo { fill: var(--seed); fill-opacity: 0.035; }
+  .dust { fill: var(--text); fill-opacity: 0.55; }
+  .twinkle { animation: twinkle var(--slow) ease-in-out infinite; }
+  @keyframes twinkle { 50% { fill-opacity: 0.12; } }
+
+  .line-about { fill: none; stroke: var(--line-about); stroke-opacity: 0.55; stroke-width: 1.2; }
+  .line-grows { fill: none; stroke: var(--line-grows); stroke-opacity: 0.85; stroke-width: 1.5; stroke-dasharray: 5 7; }
+
+  .light { cursor: pointer; text-decoration: none; outline: none; }
+  .hit { fill: transparent; }
+  .sel { fill: none; stroke-width: 1.5; opacity: 0; transition: opacity 0.2s; }
+  .light--seed .sel { stroke: var(--seed); }
+  .light--entry .sel { stroke: var(--entry); }
+  .light:hover .sel,
+  .light.is-chosen .sel { opacity: 1; }
+  /* on the map the focus ring keeps the light's own colour, drawn heavier */
+  .light:focus-visible .sel { opacity: 1; stroke-width: 3; }
+  .light:focus-visible .t-title { text-decoration: underline; }
+
+  .glow { fill: var(--seed); fill-opacity: 0.18; transform-box: fill-box; transform-origin: center; animation: pulse var(--slow) ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.35); fill-opacity: 0.08; } }
+
+  .t-title { font-family: var(--face-body); fill: var(--text); font-size: 15px; }
+  .light--seed .t-title { font-weight: 700; font-size: 17px; }
+  .t-sub { font-family: var(--face-label); font-size: 18px; letter-spacing: 0.02em; }
+  .light--seed .t-sub { fill: var(--seed); font-size: 19px; }
+  .light--entry .t-sub { fill: var(--entry); }
+
+  /* on a phone the map shrinks to a picture; the index carries the names */
+  @media (max-width: 40rem) {
+    .t-title, .t-sub { display: none; }
+  }
+</style>

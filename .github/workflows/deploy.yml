@@ -1,0 +1,43 @@
+# Builds the site and publishes it to GitHub Pages on every push to main.
+# Based on Astro's GitHub Pages guide (docs.astro.build/en/guides/deploy/github/).
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    # Nothing is published until the repository variable LIVE is set to true.
+    # Settings > Secrets and variables > Actions > Variables.
+    if: ${{ vars.LIVE == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install, build and upload
+        uses: withastro/action@v6
+        env:
+          # The one address setting. With a custom domain, change this to
+          # https://your-domain and add public/CNAME; nothing else changes.
+          SITE_URL: https://${{ github.repository_owner }}.github.io
+          # Leave empty when the repo is named <username>.github.io.
+          # For any other repo name, set a repository variable BASE_PATH to /<repo-name>.
+          BASE_PATH: ${{ vars.BASE_PATH }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

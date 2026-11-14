@@ -1,0 +1,153 @@
+---
+// A seed's page. A growing or bearing seed tells its five-part story; a seed
+// not yet planted uses the same frame and is honest about not knowing.
+import { render } from 'astro:content';
+import Frame from '../../layouts/Frame.astro';
+import Pattern from '../../components/Pattern.astro';
+import GrowthRecord from '../../components/GrowthRecord.astro';
+import ConnectedLights from '../../components/ConnectedLights.astro';
+import FootNav from '../../components/FootNav.astro';
+import { getWorld, pad, seedHref, url, type Seed } from '../../lib/world';
+
+export async function getStaticPaths() {
+  const { seeds } = await getWorld();
+  return seeds.map((seed) => ({ params: { n: pad(seed.data.number) }, props: { seed } }));
+}
+
+const { seed } = Astro.props as { seed: Seed };
+const { nextSeed } = await getWorld();
+const { Content } = await render(seed);
+const d = seed.data;
+const num = pad(d.number);
+const unplanted = d.state === 'not yet planted';
+const next = nextSeed(seed);
+const bracketed = (t: string) => /^\[.*\]$/.test(t.trim());
+const isUrl = (t: string) => /^https?:\/\//.test(t);
+---
+<Frame
+  title={`Seed ${num}: ${d.title}`}
+  description={d.description}
+  place="seeds"
+  og={`seed-${num}`}
+  crumbs={[{ label: 'map', href: url('/') }, { label: 'seeds', href: url('/#seeds') }, { label: num }]}
+>
+  <header class="head">
+    <div class="titles">
+      <p class="label label--accent label--lg prompt">seed {num} · {d.state}</p>
+      <h1>{d.title}</h1>
+      <p class:list={['question', { blank: bracketed(d.question) }]}>{d.question}</p>
+    </div>
+    <Pattern seed={seed} />
+  </header>
+
+  {d.rings.length > 0 && (
+    <section class="ring-key" aria-label="What each ring records">
+      {d.rings.map((r, i) => (
+        <p>
+          <span style={`color: var(--ring-${(i % 4) + 1})`}>ring {i + 1}</span> {r.label}
+          <br />
+          {r.value ? <span class="value">{r.value}</span> : <span class="waiting">waiting</span>}
+        </p>
+      ))}
+    </section>
+  )}
+
+  <div class="body">
+    <article class:list={['story', { numbered: !unplanted }]}>
+      <Content />
+      {unplanted && (
+        <section class="shortlist" aria-labelledby="shortlist-h">
+          <h2 id="shortlist-h">The shortlist</h2>
+          {d.shortlist && d.shortlist.length > 0 ? (
+            <ol>{d.shortlist.map((s) => <li>{s}</li>)}</ol>
+          ) : (
+            <p class="empty blank">[THE RANKED IDEAS APPEAR HERE WHEN THE RUN FINISHES]</p>
+          )}
+        </section>
+      )}
+    </article>
+
+    <aside class="side" aria-label="About this seed">
+      <GrowthRecord seed={seed} />
+      <ConnectedLights seed={seed} />
+      {d.where && (
+        <section class="where" aria-labelledby="where-h">
+          <h2 class="label" id="where-h">Where it lives</h2>
+          {[
+            ['built with', d.where.builtWith],
+            ['code', d.where.code],
+            ['running at', d.where.runningAt],
+          ].map(([k, v]) => (
+            <p>
+              {k}:{' '}
+              {isUrl(v) ? <a href={v}>{v.replace(/^https?:\/\//, '')}</a> : <span class:list={{ blank: bracketed(v) }}>{v}</span>}
+            </p>
+          ))}
+        </section>
+      )}
+    </aside>
+  </div>
+
+  <FootNav seed={seed} here={`seed-${num}`} next={{ href: seedHref(next), label: `seed ${pad(next.data.number)}: ${next.data.title}`, kind: 'seed' }} />
+</Frame>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-7);
+    align-items: center;
+    padding-top: var(--s-6);
+  }
+  .titles { flex: 999 1 32rem; min-width: 0; display: flex; flex-direction: column; gap: var(--s-4); }
+  .head :global(.pattern) { flex: 1 1 17rem; }
+  h1 { font-size: var(--size-h1); }
+  .question { max-width: 38rem; font-size: var(--size-lede); color: var(--text-soft); }
+  .question.blank { color: var(--text-quiet); }
+
+  .ring-key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-7);
+    margin-top: var(--s-8);
+    border-top: var(--rule-dashed);
+  }
+  .ring-key p { flex: 1 1 12rem; padding: 0.875rem 0; border-bottom: var(--rule-dashed); }
+  .waiting { color: var(--text-quiet); }
+  .value { color: var(--text); font-weight: 700; }
+
+  .body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-8) var(--s-9);
+    align-items: flex-start;
+    margin-top: var(--s-8);
+  }
+  .story { flex: 999 1 35rem; min-width: 0; max-width: 44rem; display: flex; flex-direction: column; gap: var(--s-3); }
+  .side { flex: 1 1 17.5rem; min-width: 0; display: flex; flex-direction: column; gap: var(--s-6); }
+
+  /* the story's section heads, in the terminal face: 01 / THE QUESTION */
+  .story :global(h2) {
+    font-family: var(--face-label);
+    font-weight: 400;
+    font-size: var(--size-label-xl);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: var(--s-6);
+    line-height: 1.2;
+  }
+  .story :global(h2:first-child) { margin-top: 0; }
+  .story.numbered { counter-reset: part; }
+  .story.numbered :global(h2)::before { counter-increment: part; content: counter(part, decimal-leading-zero) ' / '; }
+
+  .story :global(ol) { list-style: none; padding: 0; counter-reset: step; display: flex; flex-direction: column; gap: var(--s-2); }
+  .story :global(ol > li) { counter-increment: step; padding-left: 3ch; text-indent: -3ch; }
+  .story :global(ol > li)::before { content: counter(step, decimal-leading-zero) ' '; color: var(--text-quiet); }
+
+  .shortlist { display: flex; flex-direction: column; gap: var(--s-3); margin-top: var(--s-6); }
+  .empty { border: var(--rule-dashed-strong); padding: var(--s-5); }
+
+  .where { display: flex; flex-direction: column; gap: var(--s-1); }
+  .where h2 { margin-bottom: var(--s-1); }
+</style>

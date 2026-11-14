@@ -1,0 +1,111 @@
+/* Base styles. Structure comes from dashed rules, type and space.
+   No rounded corners, no shadows, no gradients. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--face-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  font-variant-ligatures: none;   /* a typewriter cannot join letters */
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-size: var(--size-body);
+  line-height: var(--leading-body);
+  background: var(--ground);
+}
+
+h1, h2, h3, p, ul, ol, dl, dd, figure, blockquote { margin: 0; }
+ul[class], ol[class] { list-style: none; padding: 0; }
+
+img, svg { display: block; max-width: 100%; }
+
+a { color: var(--link); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { color: var(--link-hover); }
+
+/* links take the colour of where they lead */
+a.to-seed { color: var(--link-seed); }
+a.to-entry { color: var(--link-entry); }
+a.to-seed:hover, a.to-entry:hover { color: var(--link-hover); }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+::selection { background: var(--accent); color: var(--ground); }
+
+h1 {
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+/* the terminal face: labels, navigation, section heads */
+.label {
+  font-family: var(--face-label);
+  font-weight: 400;
+  font-size: var(--size-label);
+  letter-spacing: var(--tracking-label);
+  line-height: 1.2;
+  color: var(--text-quiet);
+  text-transform: uppercase;
+}
+.label--accent { color: var(--accent); }
+.label--lg { font-size: var(--size-label-lg); }
+
+.prompt::before { content: '> '; }
+
+.nowrap { white-space: nowrap; }
+
+/* a visible blank for the owner to fill: [LIKE THIS] */
+.blank { color: var(--text-quiet); }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  left: var(--gutter);
+  top: -4rem;
+  z-index: 50;
+  padding: var(--s-2) var(--s-3);
+  background: var(--ground);
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+}
+.skip:focus { top: var(--s-2); }
+
+.page {
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* links set in the terminal face, e.g. <- BACK TO THE MAP */
+.term-link {
+  font-family: var(--face-label);
+  font-size: var(--size-label-lg);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  min-height: 44px;
+  display: inline-block;
+  padding-block: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

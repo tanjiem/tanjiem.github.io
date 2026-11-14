@@ -1,0 +1,30 @@
+---
+// Ways to write to the gardener. Empty settings show as visible blanks.
+import { owner } from '../../site.config.mjs';
+import { url } from '../lib/world';
+
+interface Props {
+  resume?: boolean;
+  inline?: boolean;
+}
+const { resume = false, inline = false } = Astro.props;
+const items = [
+  { label: owner.email || '[YOUR EMAIL]', href: owner.email ? `mailto:${owner.email}` : '' },
+  { label: 'github', href: owner.github, blank: '[GITHUB LINK]' },
+  { label: 'linkedin', href: owner.linkedin, blank: '[LINKEDIN LINK]' },
+  ...(resume ? [{ label: 'resume.pdf', href: url(owner.resume) }] : []),
+];
+---
+<ul class:list={['contact', { inline }]}>
+  {items.map((i) => (
+    <li>
+      {i.href ? <a href={i.href}>{i.label}</a> : <span class="blank">{i.blank ? `${i.label} ${i.blank}` : i.label}</span>}
+    </li>
+  ))}
+</ul>
+
+<style>
+  .contact { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .contact.inline { flex-direction: row; flex-wrap: wrap; gap: 0 var(--s-6); }
+  li { min-height: 44px; display: flex; align-items: center; }
+</style>
