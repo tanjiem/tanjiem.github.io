@@ -8,7 +8,7 @@ automated check passes; these are the things code should not decide for you.
 - [ ] **Résumé.** Put the file at `public/resume.pdf`. Every page links to it, and today that link leads nowhere.
 - [ ] **Contact.** Fill in `email`, `github` and `linkedin` in `site.config.mjs`. Empty values show as `[YOUR EMAIL]` and similar.
 - [ ] **Going live.** The code is in the public repo `tanjiem/tanjiem.github.io`, and nothing is published yet. When you are ready:
-  1. In the repo's Settings > Pages, set Source to "GitHub Actions".
+  1. Pages is already set to publish from "GitHub Actions" (GitHub turns Pages on by itself for a repo with this name and won't let it be switched off; the workflow below is what keeps it unpublished).
   2. In Settings > Secrets and variables > Actions > Variables, add `LIVE` with the value `true`.
   3. Push anything, or run the workflow from the Actions tab. The site appears at https://tanjiem.github.io/.
 - [ ] **Later, private with GitHub Pro.** After upgrading, switch the repo to private in Settings. Pages keeps working and nothing in the code changes. Everything pushed while the repo was public stays public in any clones or forks made before the switch.
