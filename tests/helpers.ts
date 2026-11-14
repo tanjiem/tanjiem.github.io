@@ -25,3 +25,13 @@ export function watchErrors(page: Page) {
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   return errors;
 }
+
+/**
+ * Opens a page and waits until its fonts have loaded, so nothing moves under
+ * a tap or click. Without this, a late font swap can shift the map on a phone
+ * and a tap lands on empty sky instead of the light.
+ */
+export async function open(page: Page, path: string) {
+  await page.goto(path, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+}
